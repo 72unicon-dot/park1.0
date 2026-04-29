@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html class="light" lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>AppleLog - 통합 농장 관리</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;900&family=Lexend:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "primary": "#ae1823",
+          "secondary": "#3a6a00",
+          "secondary-fixed": "#b3f574",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-low": "#f4f4ef",
+          "surface-bright": "#fafaf5",
+          "surface-container": "#eeeee9",
+          "outline-variant": "#e3bebb",
+          "on-surface": "#1a1c19",
+          "background": "#fafaf5",
+          "secondary-container": "#b0f272"
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  ::-webkit-scrollbar { width: 0px; background: transparent; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  body { min-height: max(884px, 100dvh); background-color: #fafaf5; }
+  
+  .app-view { display: none; animation: fadeIn 0.3s ease; }
+  .app-view.active { display: block; }
+  
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Scan specific CSS */
+  .camera-grid {
+    background-image: linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 33.33% 33.33%;
+  }
+  .viewfinder-corner { width: 40px; height: 40px; border-color: #ffffff; position: absolute; }
+  .corner-tl { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 12px; }
+  .corner-tr { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 12px; }
+  .corner-bl { bottom: 0; left: 0; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 12px; }
+  .corner-br { bottom: 0; right: 0; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 12px; }
+  .scan-line { height: 2px; background: linear-gradient(90deg, transparent, #ae1823, transparent); position: absolute; width: 100%; top: 50%; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-sans text-base overflow-x-hidden pb-24">
+
+<!-- Header -->
+<header id="app-header" class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-stone-50 border-b-2 border-stone-200 shadow-sm transition-colors duration-300">
+  <div class="flex items-center gap-4">
+    <button class="p-2 hover:bg-stone-100 rounded-full transition-colors flex items-center justify-center active:scale-95">
+      <span class="material-symbols-outlined header-icon text-stone-600">menu</span>
+    </button>
+    <span id="header-title" class="font-bold text-xl text-red-600 uppercase tracking-widest font-['Public_Sans'] transition-colors">AppleLog</span>
+  </div>
+  <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-red-600 flex-shrink-0 bg-white">
+    <img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-q0Qm00lr9JQcL3B7zicNMULwKqH6i6lsbOVtJhwZmgASxFGIncdsnu5HmkeLOBm3wcWE5IxtNbaBal_Cmqv0wA6V4btzztLDm9qBQ8RxrpgKFhQp-AwsF2lwSQLVOlY4x805s3NYYpuc1OejdCd7wynxO-7H5jFQrPpG4-Uc9M2QqU4MS1LlilzWVRmBvJYxZFXLfpyynjzSzvCxH6VJms_cCYxzyi47oc9ZD0wvYVLlv5nW6CZ17aCRcfBnKd7-jaEeBCgQCGzh"/>
+  </div>
+</header>
+
+<div id="main-container" class="pt-16">
+
+<!-- VIEW: DASHBOARD -->
+<section id="view-dashboard" class="app-view active">
+  <main class="p-4 max-w-4xl mx-auto space-y-6">
+    <div class="flex items-center justify-between mb-2 px-1">
+      <div>
+        <h1 class="text-3xl font-black text-stone-900 tracking-tight">안녕하세요, 박농부님</h1>
+        <p class="text-stone-500 font-medium">오늘도 과수원 관리를 시작해볼까요?</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="bg-primary text-white p-6 rounded-3xl shadow-md relative overflow-hidden flex flex-col justify-between aspect-video md:aspect-auto md:h-48">
+        <div class="absolute right-[-20px] top-[-20px] opacity-10">
+          <span class="material-symbols-outlined text-[120px]">partly_cloudy_day</span>
+        </div>
+        <div class="relative z-10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-3xl">partly_cloudy_day</span>
+            <span class="font-bold text-xl">22°C</span>
+          </div>
+          <span class="text-sm font-semibold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full">맑음</span>
+        </div>
+        <div class="relative z-10 mt-auto">
+          <h3 class="font-bold mb-1">방제하기 좋은 날씨입니다</h3>
+          <p class="text-sm opacity-90 text-red-100">오후 강수 확률 10% • 습도 45%</p>
+        </div>
+      </div>
+      <div class="bg-white p-5 rounded-3xl border-2 border-stone-200 shadow-sm flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-4">
+          <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+            <span class="material-symbols-outlined">eco</span>
+          </div>
+          <span class="text-xs font-bold text-stone-400">이번 주 일정</span>
+        </div>
+        <div>
+          <h3 class="text-3xl font-black text-stone-800">4<span class="text-lg font-bold text-stone-500">건</span></h3>
+          <p class="text-sm font-semibold text-stone-500 mt-1">예정된 작업 목록 확인</p>
+        </div>
+      </div>
+    </div>
+    <section>
+      <div class="flex items-center justify-between mb-4 px-1">
+        <h2 class="font-headline-md text-2xl font-semibold text-on-surface">오늘의 작업</h2>
+        <button onclick="switchView('logs')" class="text-primary font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity">전체 보기 <span class="material-symbols-outlined text-sm">arrow_forward</span></button>
+      </div>
+      <div class="space-y-4">
+        <div class="bg-white p-5 rounded-2xl border-l-8 border-red-600 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 font-bold text-sm">오전</div>
+            <div>
+              <h3 class="font-bold text-lg text-stone-800">B구역 전정 작업</h3>
+              <p class="text-sm text-stone-500 flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[14px]">location_on</span>허니크리스피 밭</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-stone-300">chevron_right</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border-l-8 border-secondary shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-secondary font-bold text-sm">오후</div>
+            <div>
+              <h3 class="font-bold text-lg text-stone-800">C구역 수분 상태 점검</h3>
+              <p class="text-sm text-stone-500 flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[14px]">water_drop</span>관수 시스템 확인</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-stone-300">chevron_right</span>
+        </div>
+      </div>
+    </section>
+    <button onclick="switchView('new-log')" class="fixed right-6 bottom-28 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-800 transition-colors z-40 active:scale-95">
+      <span class="material-symbols-outlined text-3xl">add</span>
+    </button>
+  </main>
+</section>
+
+<!-- VIEW: LOGS -->
+<section id="view-logs" class="app-view">
+  <main class="p-4 max-w-md mx-auto pt-8">
+    <section class="mb-6">
+      <div class="relative group">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-stone-400 group-focus-within:text-primary transition-colors">search</span>
+        </div>
+        <input class="w-full h-14 bg-white border-2 border-stone-200 focus:border-primary focus:ring-0 rounded-xl pl-12 pr-4 text-on-surface placeholder:text-stone-400 transition-all shadow-sm" placeholder="작업 일지 검색..." type="text"/>
+      </div>
+    </section>
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-2xl font-bold text-on-surface">전체 일지</h2>
+      <button onclick="switchView('new-log')" class="bg-primary text-white rounded-full px-4 py-2 flex items-center gap-2 shadow-lg active:scale-95 transition-transform hover:bg-red-800">
+        <span class="material-symbols-outlined">add</span>
+        <span class="font-semibold text-sm">새 일지</span>
+      </button>
+    </div>
+    <div class="space-y-10">
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="h-[2px] flex-grow bg-stone-200"></div>
+          <span class="text-sm font-bold text-stone-500 tracking-widest uppercase">2026년 4월</span>
+          <div class="h-[2px] flex-grow bg-stone-200"></div>
+        </div>
+        <div class="space-y-4" id="april-logs-container">
+          <div class="bg-white p-4 rounded-xl border-l-4 border-primary shadow-sm flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+            <div class="flex flex-col items-center justify-center min-w-[56px] bg-stone-50 rounded-lg p-2 h-fit">
+              <span class="text-xs font-bold text-stone-500 leading-none">29</span>
+              <span class="text-[10px] font-bold text-primary uppercase">APR</span>
+              <span class="material-symbols-outlined mt-2 text-primary" style="font-variation-settings: 'FILL' 1;">content_cut</span>
+            </div>
+            <div class="flex-grow">
+              <h3 class="font-bold text-on-surface">B구역 전정 작업</h3>
+              <p class="text-stone-600 text-sm line-clamp-2 mt-1">통풍과 채광을 위해 상단 수관 정리...</p>
+              <div class="mt-2 flex gap-2">
+                <span class="bg-secondary-container/20 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full border border-secondary/20">허니크리스피</span>
+                <span class="bg-stone-100 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-stone-200">유지보수</span>
+              </div>
+            </div>
+            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+              <img alt="Pruned branches" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRvvSYDgplGsIPmmvZtbxaUw77yEfLMOIVZ5w-aNt4HgWkK_oWf9xf0bviOQs0u_B4rDQ83E1RnHnmuKbbCLbtWxpE72naRHpV0uH8OlcWWfN1pAM2xqqZImd6pXv3PcimZsjpXlrla1NAHV37SKzvu1H_oTkjt1zumUR8PgwoVUuznh7dQJRXyhdZPeyQ05gDwXbBtOOBBxf9nwp01QPEpQp7iWz2yZ5hYF0p0bSKJWNvQoDqKaYM0qzdr2OCvRx3Ox3AqfJW_M9X"/>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border-l-4 border-secondary shadow-sm flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+            <div class="flex flex-col items-center justify-center min-w-[56px] bg-stone-50 rounded-lg p-2 h-fit">
+              <span class="text-xs font-bold text-stone-500 leading-none">24</span>
+              <span class="text-[10px] font-bold text-primary uppercase">APR</span>
+              <span class="material-symbols-outlined mt-2 text-secondary" style="font-variation-settings: 'FILL' 1;">eco</span>
+            </div>
+            <div class="flex-grow">
+              <h3 class="font-bold text-on-surface">토양 시비</h3>
+              <p class="text-stone-600 text-sm line-clamp-2 mt-1">후지 구역에 유기농 질소 비료 살포...</p>
+              <div class="mt-2 flex gap-2">
+                <span class="bg-secondary-container/20 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full border border-secondary/20">후지</span>
+                <span class="bg-stone-100 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-stone-200">영양관리</span>
+              </div>
+            </div>
+            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+              <img alt="Fertilizer application" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvYMv6bBFwKMD3_CbCTBRma-ECExRO3L4yv2MPCgFsegqNKa4LEwmbV_aifTB7KGK5DKS9U9uVWqVGF04qbv2zxsAwYMOdfmZXCbzSPup2stmEW0RXR1vfjB5K8QqFryqgoh67Z7mtzE-IG2-4uN_0pVJG8pmou2aQD_4gcQf-BzwTPRePJaRktHVW6QrEBGYqY7YNvr5XGBjs9STnFOlX4x2PcQEp_KohfQoyT9f_ybyu0akZr8Kd2ZeGd8g3R5w3xREXExWZCJbp"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="h-[2px] flex-grow bg-stone-200"></div>
+          <span class="text-sm font-bold text-stone-500 tracking-widest uppercase">2026년 3월</span>
+          <div class="h-[2px] flex-grow bg-stone-200"></div>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-white p-4 rounded-xl border-l-4 border-primary shadow-sm flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+            <div class="flex flex-col items-center justify-center min-w-[56px] bg-stone-50 rounded-lg p-2 h-fit">
+              <span class="text-xs font-bold text-stone-500 leading-none">30</span>
+              <span class="text-[10px] font-bold text-primary uppercase">MAR</span>
+              <span class="material-symbols-outlined mt-2 text-primary" style="font-variation-settings: 'FILL' 1;">shopping_basket</span>
+            </div>
+            <div class="flex-grow">
+              <h3 class="font-bold text-on-surface">갈라 최종 수확</h3>
+              <p class="text-stone-600 text-sm line-clamp-2 mt-1">갈라 사과 3차 수확 완료. 수확량...</p>
+              <div class="mt-2 flex gap-2">
+                <span class="bg-secondary-container/20 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full border border-secondary/20">갈라</span>
+                <span class="bg-stone-100 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-stone-200">수확량</span>
+              </div>
+            </div>
+            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+              <img alt="Apple harvest" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA19ye8n-hmECNV5304TZzR6qeBxeI2giyA1TzipZLhPHMPB3MO7Obn-lvk7S7ffk4ln8M_jxlfHY40k7XXJPgBo6Fc_YPjjzRV_osFtpZAO42zKuGw9U8juf1yCOLCeLRVyA0hVt6mcA4dtKauSgYeBWXImd3fkDxB3QBGO33OghkefwpWglCeTfap2VdIPShuuT0q4Q0itBf_s7rkEhFWw5-leebG0WR1L40IsEMFHjvef8eDhOhrFoyA-pgMyJ4Ke-Thj8Aimq4K"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- VIEW: NEW LOG -->
+<section id="view-new-log" class="app-view">
+  <main class="p-4 max-w-3xl mx-auto pt-8">
+    <section class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">오늘의 작업 일지</h1>
+      <p class="text-stone-600">과수원 관리 및 유지보수 기록</p>
+    </section>
+    <div class="space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-primary">
+          <label class="block font-bold text-stone-600 mb-3">작업 카테고리</label>
+          <div class="relative">
+            <select id="new-log-category" class="w-full bg-stone-50 border-b-2 border-stone-300 focus:border-primary transition-colors duration-200 p-4 rounded-t-lg outline-none appearance-none font-semibold">
+              <option disabled="" selected="" value="">작업을 선택하세요...</option>
+              <option value="harvesting">수확</option>
+              <option value="pruning">가지치기</option>
+              <option value="irrigation">관수 점검</option>
+              <option value="pest-control">병해충 방제</option>
+              <option value="fertilizing">시비(비료)</option>
+            </select>
+            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-stone-500">
+              <span class="material-symbols-outlined">expand_more</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+          <label class="block font-bold text-stone-600 mb-3">날짜</label>
+          <div class="flex items-center gap-3 p-4 bg-stone-50 rounded-lg">
+            <span class="material-symbols-outlined text-secondary">calendar_today</span>
+            <span class="font-bold">2026년 4월 29일</span>
+          </div>
+        </div>
+        <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+          <label class="block font-bold text-stone-600 mb-3">상세 내용</label>
+          <textarea id="new-log-details" class="w-full bg-stone-50 border-b-2 border-stone-300 focus:border-primary transition-colors duration-200 p-4 rounded-t-lg outline-none resize-none font-medium" placeholder="수행한 작업과 관찰 사항을 입력하세요..." rows="4"></textarea>
+        </div>
+        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="previewImage(event)" />
+          <div onclick="document.getElementById('photo-upload').click()" class="bg-stone-50 border-2 border-dashed border-stone-300 rounded-xl flex flex-col items-center justify-center p-8 hover:bg-stone-100 transition-colors cursor-pointer group">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-3xl">add_a_photo</span>
+            </div>
+            <span class="font-bold text-primary">사진 추가</span>
+            <p class="text-stone-500 text-sm mt-1">촬영 또는 갤러리 선택</p>
+          </div>
+          <div id="photo-preview-container" class="relative group bg-white rounded-xl overflow-hidden shadow-sm border border-stone-200">
+            <img id="photo-preview-img" class="w-full h-full object-cover aspect-video md:aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJT3So6kxsp7EXs_jZf6Tqkq4lMAWlyCQMD-vLlwEyQqPfOXBwRDBtWdo5E9aD0Q69TLXgEe7y5akA2tRO7Qw7XOcHoro0izW94A1cDt2oecLvBJ7-gPSC22UNu12CULrVF1kSOKTXjsjVncy7G4uObUAC-pwIyRP8sypulisFriLScJa8ULg-wMBopR663LGJ8O85efiOvfnUXXqnRs4QVAEYvbLmx_dpK8cEm4KFoi_AN_18byGyaf21zFBPotMxlZVwnZp1UxX9"/>
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+              <div class="flex w-full justify-between items-center">
+                <span id="photo-preview-name" class="text-white text-sm font-medium">Orchard_Block_A4.jpg</span>
+                <button type="button" onclick="clearPreview()" class="bg-red-600 text-white p-1 rounded-full hover:bg-red-700 transition-colors active:scale-90">
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-4 pt-4">
+        <button onclick="saveLog()" class="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl shadow-lg hover:bg-red-800 transition-colors flex items-center justify-center gap-2 active:scale-95">
+          <span class="material-symbols-outlined">save</span> 일지 저장하기
+        </button>
+        <button onclick="switchView('logs')" class="w-full h-14 border-2 border-stone-300 text-stone-600 font-bold text-lg rounded-xl hover:bg-stone-50 flex items-center justify-center transition-colors active:scale-95">
+          취소
+        </button>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- VIEW: SUCCESS -->
+<section id="view-success" class="app-view">
+  <main class="flex items-center justify-center pt-24 px-4 h-full">
+    <div class="max-w-md w-full text-center space-y-8">
+      <div class="relative inline-block">
+        <div class="absolute inset-0 bg-green-100 rounded-full scale-150 blur-xl"></div>
+        <div class="relative bg-green-500 text-white w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-lg border-4 border-white">
+          <span class="material-symbols-outlined text-6xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h1 class="text-2xl font-bold">일지가 성공적으로 저장되었습니다!</h1>
+        <p class="text-stone-600 px-4">오늘의 작업 내용이 과수원 데이터베이스에 안전하게 기록되었습니다.</p>
+      </div>
+      <div class="bg-white rounded-xl p-6 text-left shadow-sm border border-stone-200" style="box-shadow: -4px 0 0 0 #3a6a00, 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h2 class="font-bold text-secondary mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-sm">assignment</span>작업 요약</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">날짜</p>
+            <p class="font-bold text-stone-900">2026년 4월 29일</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">카테고리</p>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-secondary"></span>
+              <p class="font-bold text-stone-900">전정 작업</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-4 w-full max-w-xs mx-auto pt-4">
+        <button onclick="switchView('logs')" class="w-full h-14 bg-primary text-white font-bold rounded-xl shadow-md transition-colors hover:bg-red-800 flex items-center justify-center active:scale-95">
+          전체 일지 보기
+        </button>
+        <button onclick="switchView('dashboard')" class="w-full h-14 border-2 border-stone-300 text-stone-700 font-bold rounded-xl transition-colors hover:bg-stone-50 flex items-center justify-center active:scale-95">
+          대시보드로 이동
+        </button>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- VIEW: SCAN -->
+<section id="view-scan" class="app-view bg-stone-950 text-white" style="margin-top: -64px;">
+  <main class="relative w-full h-[calc(100vh-80px)] overflow-hidden pt-16">
+    <div class="absolute inset-0 z-0">
+      <img alt="Apple Tree Branch" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGb6Hpd70DJ4no3dTgp9XOkHBlkPerIDGujr8I5meDzRXC8fMK96Rp6Xy2Esq3ziX9cWJU9UxFnm580i7JPezauuIde9caCjkLKSY2fLSyVFfku169PocSanVkkn3m7IdI56gS7vhrvE1_rCaKJlovRAQu4b5dYBtcF7xQ-SHR5ZUnknLDuh-f1fPJm-tqZOqeopVRMhqaN8q882_f6ED4jJlJ0Y8VGKFQG_PcjXGhK6zeL9ShQufNPTefzhbcsYjS3pZ151PfQrPe"/>
+      <div class="absolute inset-0 bg-black/20"></div>
+    </div>
+    <div class="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
+      <div class="relative w-full aspect-square max-w-sm">
+        <div class="viewfinder-corner corner-tl"></div>
+        <div class="viewfinder-corner corner-tr"></div>
+        <div class="viewfinder-corner corner-bl"></div>
+        <div class="viewfinder-corner corner-br"></div>
+        <div class="absolute inset-0 camera-grid opacity-30"></div>
+        <div class="absolute top-1/4 left-1/3 w-24 h-24 border-2 border-primary border-dashed rounded-lg flex items-start justify-start p-1 bg-primary/10">
+          <span class="text-[10px] font-bold text-primary uppercase bg-white px-1 leading-none rounded-sm">스캔 중...</span>
+        </div>
+        <div class="scan-line shadow-[0_0_15px_rgba(174,24,35,0.8)] animate-pulse"></div>
+      </div>
+      <div class="mt-8 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse"></span>
+        <span class="text-white text-[10px] font-bold uppercase tracking-widest">AI 비전 활성화됨</span>
+      </div>
+    </div>
+    <div class="absolute bottom-10 left-0 w-full z-20 flex flex-col items-center gap-6 px-6">
+      <p class="text-white text-center font-medium drop-shadow-md max-w-xs">분석을 위해 프레임 안에 잎이나 가지를 맞춰주세요.</p>
+      <div class="flex items-center gap-8">
+        <button class="w-12 h-12 rounded-full bg-black/40 border border-white/20 flex items-center justify-center text-white active:scale-95">
+          <span class="material-symbols-outlined">flash_on</span>
+        </button>
+        <button onclick="switchView('diagnosis')" class="group relative flex items-center justify-center w-24 h-24 rounded-full bg-white p-1 shadow-2xl hover:scale-95 transition-transform duration-150 cursor-pointer active:scale-90">
+          <div class="w-full h-full rounded-full border-4 border-primary flex items-center justify-center overflow-hidden">
+            <div class="w-16 h-16 rounded-full bg-primary flex flex-col items-center justify-center text-white">
+              <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">center_focus_strong</span>
+            </div>
+          </div>
+        </button>
+        <button class="w-12 h-12 rounded-full bg-black/40 border border-white/20 flex items-center justify-center text-white active:scale-95">
+          <span class="material-symbols-outlined">image</span>
+        </button>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- VIEW: DIAGNOSIS -->
+<section id="view-diagnosis" class="app-view">
+  <main class="pt-8 px-4 max-w-4xl mx-auto space-y-8">
+    <section class="flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-sm">
+        <span class="material-symbols-outlined">analytics</span>
+        <span>진단 결과</span>
+      </div>
+      <h1 class="text-3xl font-bold">분석 완료</h1>
+      <p class="text-stone-600">스캔 결과 B구역 4번 라인에서 심각한 세균성 감염 징후가 발견되었습니다.</p>
+    </section>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div class="md:col-span-7 bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden relative">
+        <div class="relative h-64 md:h-full min-h-[320px]">
+          <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyiQPbC2zVAyes4urR_fQ5qoA5e6P_viuRk_QxpWm4IabVArgAv-_6JnqTzZL51UAimrjeVGsaDr1v72QfBDK_14L3vfG5fTqK_pS5FEVByVpPLDSMdEAB0HKEY93JAzaVF_wnY0n3D5KwVzTDfCN_D_8oXtzqUygPIddS6A-VAGS4ExHxG0PqW4oF_9g6HZdFNP-qtN0C8i188iV76rF0JIYr_qN_feZFoEl6wv40Kc7lp89YEW-faSEDIxP9PKa7dhf5Y_KchOpp"/>
+          <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <div class="w-48 h-48 border-2 border-red-500 border-dashed rounded-lg flex items-center justify-center">
+              <div class="bg-red-600 text-white px-3 py-1 rounded-full font-bold animate-pulse">탐지됨</div>
+            </div>
+          </div>
+          <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md p-3 rounded-lg shadow-lg">
+            <div class="flex items-center gap-2 text-stone-900 font-semibold">
+              <span class="material-symbols-outlined text-red-600">location_on</span>
+              <span>Braeburn Section, Row 12</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="md:col-span-5 flex flex-col gap-6">
+        <div class="bg-red-50 border-l-4 border-red-600 p-6 rounded-xl shadow-sm">
+          <h2 class="text-xl font-bold text-red-700 mb-1">화상병 (Fire Blight)</h2>
+          <p class="text-sm text-red-900/80 mb-4 italic">Erwinia amylovora (학명)</p>
+          <div class="flex items-center gap-4">
+            <div class="bg-red-600/10 rounded-lg p-3 flex flex-col items-center flex-1">
+              <span class="text-sm font-bold text-red-600">심각도</span>
+              <span class="text-lg font-bold text-red-600">높음</span>
+            </div>
+            <div class="bg-red-600/10 rounded-lg p-3 flex flex-col items-center flex-1">
+              <span class="text-sm font-bold text-red-600">신뢰도</span>
+              <span class="text-lg font-bold text-red-600">94%</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-surface-container rounded-xl p-6 flex flex-col gap-4">
+          <h3 class="font-bold flex items-center gap-2 text-stone-700">
+            <span class="material-symbols-outlined text-primary">info</span>
+            빠른 요약
+          </h3>
+          <p class="text-stone-800">따뜻하고 습한 날씨에 발생하는 세균성 질환입니다. 도구나 매개곤충을 통해 빠르게 전염될 수 있으므로 즉각적인 조치가 필요합니다.</p>
+        </div>
+      </div>
+    </div>
+    <section class="bg-white rounded-2xl p-8 border-2 border-stone-200 shadow-sm mt-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700">
+          <span class="material-symbols-outlined">medical_services</span>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold">치료 솔루션</h2>
+          <p class="text-stone-600">확산 방지를 위해 다음 단계를 즉시 수행하십시오.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div class="space-y-4">
+          <h3 class="font-bold text-green-700 uppercase tracking-widest text-sm">긴급 조치</h3>
+          <ul class="space-y-3">
+            <li class="flex gap-3"><span class="material-symbols-outlined text-green-700">check_circle</span><span>다음 방제 시기에 구리 제제 살균제를 살포하십시오.</span></li>
+            <li class="flex gap-3"><span class="material-symbols-outlined text-green-700">check_circle</span><span>개화기 동안 스트렙토마이신을 사용하여 최선의 결과를 얻으십시오.</span></li>
+            <li class="flex gap-3"><span class="material-symbols-outlined text-green-700">check_circle</span><span>제거한 가지는 과수원에서 멀리 떨어진 곳에서 소각하십시오.</span></li>
+          </ul>
+        </div>
+        <div class="space-y-4">
+          <h3 class="font-bold text-red-700 uppercase tracking-widest text-sm">화학적 방제</h3>
+          <ul class="space-y-3">
+            <li class="flex gap-3"><span class="material-symbols-outlined text-red-700">science</span><span>다음 방제 시기에 구리 제제 살균제를 살포하십시오.</span></li>
+            <li class="flex gap-3"><span class="material-symbols-outlined text-red-700">science</span><span>개화기 동안 스트렙토마이신을 사용하여 최선의 결과를 얻으십시오.</span></li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</section>
+
+</div>
+
+<!-- BottomNavBar -->
+<nav id="bottom-nav" class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 h-20 pb-safe bg-stone-50/95 backdrop-blur-md border-t-2 border-stone-200 shadow-lg transition-colors duration-300">
+  <button onclick="switchView('dashboard')" id="tab-dashboard" class="nav-tab flex flex-col items-center justify-center text-red-600 bg-red-50 rounded-xl px-3 py-1 transition-all active:scale-95">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+    <span class="text-[11px] font-semibold uppercase mt-1">대시보드</span>
+  </button>
+  <button onclick="switchView('logs')" id="tab-logs" class="nav-tab flex flex-col items-center justify-center text-stone-500 hover:text-red-500 transition-all active:scale-95 px-3 py-1 rounded-xl">
+    <span class="material-symbols-outlined">edit_note</span>
+    <span class="text-[11px] font-semibold uppercase mt-1">일지</span>
+  </button>
+  <button onclick="switchView('scan')" id="tab-scan" class="nav-tab flex flex-col items-center justify-center text-stone-500 hover:text-red-500 transition-all active:scale-95 px-3 py-1 rounded-xl">
+    <span class="material-symbols-outlined">center_focus_strong</span>
+    <span class="text-[11px] font-semibold uppercase mt-1">스캔</span>
+  </button>
+  <button onclick="switchView('diagnosis')" id="tab-diagnosis" class="nav-tab flex flex-col items-center justify-center text-stone-500 hover:text-red-500 transition-all active:scale-95 px-3 py-1 rounded-xl">
+    <span class="material-symbols-outlined">analytics</span>
+    <span class="text-[11px] font-semibold uppercase mt-1">진단결과</span>
+  </button>
+</nav>
+
+<script>
+  function switchView(viewId) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Hide all views
+    document.querySelectorAll('.app-view').forEach(v => {
+      v.classList.remove('active');
+    });
+    
+    // Show target view
+    const targetView = document.getElementById('view-' + viewId);
+    if(targetView) targetView.classList.add('active');
+    
+    // Header customization
+    const headerTitle = document.getElementById('header-title');
+    const header = document.getElementById('app-header');
+    const headerIcons = document.querySelectorAll('.header-icon');
+    
+    // Reset header to default style
+    header.className = "fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-stone-50 border-b-2 border-stone-200 shadow-sm transition-colors duration-300";
+    headerTitle.className = "font-bold text-xl text-red-600 uppercase tracking-widest font-['Public_Sans'] transition-colors";
+    headerIcons.forEach(i => i.classList.replace('text-white', 'text-stone-600'));
+    
+    switch(viewId) {
+      case 'dashboard': headerTitle.innerText = "AppleLog"; break;
+      case 'logs': headerTitle.innerText = "전체 일지"; break;
+      case 'new-log': headerTitle.innerText = "새 일지 작성"; break;
+      case 'success': headerTitle.innerText = "저장 성공"; break;
+      case 'scan': 
+        headerTitle.innerText = "과수 스캔"; 
+        // Dark theme for scan header
+        header.className = "fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-stone-950 border-b-2 border-stone-800 shadow-sm transition-colors duration-300 text-white";
+        headerTitle.className = "font-bold text-xl text-white uppercase tracking-widest font-['Public_Sans'] transition-colors";
+        headerIcons.forEach(i => i.classList.replace('text-stone-600', 'text-white'));
+        break;
+      case 'diagnosis': headerTitle.innerText = "진단 결과"; break;
+    }
+    
+    // Reset bottom nav tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.className = "nav-tab flex flex-col items-center justify-center text-stone-500 hover:text-red-500 transition-all active:scale-95 px-3 py-1 rounded-xl";
+      tab.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 0";
+    });
+    
+    // Highlight active tab
+    let tabId = viewId;
+    if(viewId === 'new-log' || viewId === 'success') tabId = 'logs'; // Keep 'logs' tab active for subpages
+    
+    const activeTab = document.getElementById('tab-' + tabId);
+    if(activeTab) {
+      activeTab.className = "nav-tab flex flex-col items-center justify-center text-red-600 bg-red-50 rounded-xl px-3 py-1 transition-all active:scale-95";
+      activeTab.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 1";
+    }
+  }
+
+  // --- Photo Upload Logic ---
+  function previewImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('photo-preview-img').src = e.target.result;
+        document.getElementById('photo-preview-name').innerText = file.name;
+        document.getElementById('photo-preview-container').style.display = 'block';
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function clearPreview() {
+    document.getElementById('photo-upload').value = '';
+    document.getElementById('photo-preview-container').style.display = 'none';
+  }
+
+  function saveLog() {
+    const categorySelect = document.getElementById('new-log-category');
+    const details = document.getElementById('new-log-details').value;
+    
+    if (categorySelect.selectedIndex === 0 || !details.trim()) {
+      alert("카테고리와 상세 내용을 모두 입력해주세요.");
+      return;
+    }
+    
+    const categoryVal = categorySelect.options[categorySelect.selectedIndex].text;
+    const photoContainer = document.getElementById('photo-preview-container');
+    const hasPhoto = photoContainer.style.display === 'block';
+    const photoSrc = hasPhoto ? document.getElementById('photo-preview-img').src : '';
+
+    const logHTML = `
+      <div class="bg-white p-4 rounded-xl border-l-4 border-primary shadow-sm flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+        <div class="flex flex-col items-center justify-center min-w-[56px] bg-stone-50 rounded-lg p-2 h-fit">
+          <span class="text-xs font-bold text-stone-500 leading-none">29</span>
+          <span class="text-[10px] font-bold text-primary uppercase">APR</span>
+          <span class="material-symbols-outlined mt-2 text-primary" style="font-variation-settings: 'FILL' 1;">eco</span>
+        </div>
+        <div class="flex-grow">
+          <h3 class="font-bold text-on-surface">${categoryVal}</h3>
+          <p class="text-stone-600 text-sm line-clamp-2 mt-1">${details}</p>
+          <div class="mt-2 flex gap-2">
+            <span class="bg-stone-100 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-stone-200">신규등록</span>
+          </div>
+        </div>
+        ${hasPhoto ? `<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0"><img class="w-full h-full object-cover" src="${photoSrc}"/></div>` : ''}
+      </div>
+    `;
+
+    document.getElementById('april-logs-container').insertAdjacentHTML('afterbegin', logHTML);
+
+    // Clear form
+    categorySelect.selectedIndex = 0;
+    document.getElementById('new-log-details').value = '';
+    clearPreview();
+
+    // Show success view
+    switchView('success');
+  }
+</script>
+</body>
+</html>
